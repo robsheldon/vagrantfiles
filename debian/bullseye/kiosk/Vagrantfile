@@ -8,12 +8,20 @@ locale-gen en_US.UTF-8
 localedef -i en_US -f UTF-8 en_US.UTF-8
 export LANGUAGE=en_US.UTF-8 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
+# Turn off syslog; for this use, it isn't needed, and just adds unnecessary disk i/o.
+systemctl disable rsyslog
+
+# Also neuter journald's log storage.
+cat <<'JOURNALD' | tee /etc/systemd/journald.conf >/dev/null
+[Journal]
+Storage=none
+ForwardToSyslog=yes
+JOURNALD
+systemctl daemon-reload
+
 # Clean out some preinstalled cruft before upgrading.
 # These need to all be in one command, otherwise initramfs gets rebuilt repeatedly.
-apt -qy purge debian-faq doc-debian gcc-9-base git gnustep-common install-info installation-report javascript-common man-db manpages modemmanager netpbm ppp nftables ntfs-3g os-prober packagekit packagekit-tools pinentry-qt plymouth plymouth-label qemu-utils reportbug scrot smartmontools sweeper tasksel termit upower usbutils xorg-docs-coretelnet
-apt -qy --purge autoremove
-dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt -qy purge
-apt -qy clean
+apt -qy purge gcc-9-base git gnustep-common install-info installation-report javascript-common modemmanager netpbm ppp nftables ntfs-3g os-prober packagekit packagekit-tools pinentry-qt plymouth plymouth-label reportbug rsyslog scrot smartmontools sweeper tasksel telnet termit upower usbutils
 
 # "fasttrack" is required for installing virtualbox-guest-x11
 cat <<'FASTTRACK' | tee /etc/apt/sources.list.d/fasttrack.list
@@ -30,7 +38,13 @@ apt -qy upgrade
 # swapspace prevents OOM death on VMs
 apt -qy install aptitude swapspace
 
-apt -qy install lightdm openbox xorg virtualbox-guest-x11
+# xorg is required for basic desktop application support, but works fine without
+# additional packages.
+apt -qy --no-install-recommends xorg
+
+# lightdm is required for basic desktop application support, and requires additional
+# recommended packages to work properly.
+apt -qy install lightdm openbox virtualbox-guest-x11
 
 mkdir -p /home/vagrant/.config/openbox
 
@@ -58,6 +72,21 @@ cat <<'RCXML' | tee /home/vagrant/.config/openbox/rc.xml >/dev/null
 
 </openbox_config>
 RCXML
+
+# Configure LightDM to automatically login (start the desktop)
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat <<'AUTOLOGIN' | tee /etc/lightdm/lightdm.conf.d/01_autologin.conf >/dev/null
+[Seat:*]
+autologin-user=vagrant
+autologin-user-timeout=0
+AUTOLOGIN
+
+# Post-install cleanup
+apt -qy purge doc-debian debian-faq genisoimage man-db manpages qemu-utils xorg-docs-core
+apt -qy --purge autoremove
+dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt -qy purge
+apt -qy clean
+
 SETUP
 
 Vagrant.configure("2") do |config|
