@@ -1,0 +1,73 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+# TODO
+# vboxmanage modifyvm <uuid/name> --clipboard-mode bidirectional
+
+# Set up a minimal openbox environment with VirtualBox Guest Additions.
+#   swapspace is used to prevent OOM death on VMs
+#   fasttrack is required to install virtualbox guest additions (https://wiki.debian.org/VirtualBox#Debian_10_.22Buster.22_and_Debian_11_.22Bullseye.22-1)
+$setup = <<-'SETUP'
+cat <<'FASTTRACK' | tee /etc/apt/sources.list.d/fasttrack.list
+deb https://fasttrack.debian.net/debian-fasttrack/ bullseye-fasttrack main contrib
+deb https://fasttrack.debian.net/debian-fasttrack/ bullseye-backports-staging main contrib
+FASTTRACK
+apt -qy update
+apt -qy install fasttrack-archive-keyring
+apt -qy update
+apt -qy upgrade
+apt -qy install aptitude swapspace
+apt -qy install lightdm openbox xorg virtualbox-guest-x11
+
+mkdir -p /home/vagrant/.config/openbox
+
+cat <<'AUTOSTART' | tee /home/vagrant/.config/openbox/autostart
+# Disable any form of screen saver / screen blanking / power management
+xset s off
+xset s noblank
+xset -dpms
+
+AUTOSTART
+
+cat <<'RCXML' | tee /home/vagrant/.config/openbox/rc.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc"
+                xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <desktops>
+    <number>4</number>
+  </desktops>
+
+  <applications>
+    <application class="*">
+      <decor>no</decor>
+    </application>
+  </applications>
+
+</openbox_config>
+RCXML
+SETUP
+
+Vagrant.configure("2") do |config|
+
+    ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+
+    config.vm.box               = "debian/bullseye64"
+    config.vm.box_check_update  = false
+  
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui                      = true
+        vb.memory                   = 1024
+        vb.cpus                     = 1
+        vb.check_guest_additions    = false
+    end
+
+    config.vm.provision "shell", inline: $setup
+
+    config.trigger.after [:provision] do |t|
+        t.name = "Rebooting"
+        t.run = { :inline => "vagrant reload" }
+    end
+
+end
