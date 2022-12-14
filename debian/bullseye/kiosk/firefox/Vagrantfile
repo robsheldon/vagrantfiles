@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Set up a minimal openbox environment with VirtualBox Guest Additions.
+
+Vagrant.configure("2") do |config|
+
+    # Force the use of VirtualBox.
+    ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
+
+    config.vm.box                   = "debian/bullseye64"
+    config.vm.box_check_update      = false
+  
+    # Configure VirtualBox for desktop application use.
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui                      = true
+        vb.memory                   = 2048
+        vb.cpus                     = 2
+        vb.check_guest_additions    = false
+        vb.customize                  ['modifyvm', :id, '--clipboard-mode', 'bidirectional']
+        vb.customize                  ['modifyvm', :id, '--draganddrop', 'bidirectional']
+    end
+
+    # Collect a list of parent directories that contain Vagrantfiles and "setup.sh" scripts.
+    # Stop when a parent directory doesn't contain a Vagrantfile.
+    setupfiles = []
+    path = __dir__
+    while File.dirname(path) != path && path != "/"
+        if ! File.file?(File.join(path, 'Vagrantfile'))
+            break
+        elsif File.file?(setupfile = File.join(path, 'setup.sh'))
+            setupfiles.unshift(setupfile)
+        end
+        path = File.dirname(path)
+    end
+
+    # Run the setup.sh file in each of the parent directories,
+    # starting from the top.
+    for setupfile in setupfiles do
+        config.vm.provision "shell", path: setupfile
+    end
+
+    # Restart the VM to properly load the desktop environment.
+    config.vm.provision "shell", inline: "reboot"
+
+end
