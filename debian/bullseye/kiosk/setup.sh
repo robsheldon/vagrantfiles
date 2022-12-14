@@ -17,7 +17,7 @@ systemctl daemon-reload
 # Clean out some preinstalled cruft before upgrading.
 # These need to all be in one command, otherwise initramfs gets rebuilt repeatedly.
 echo "Cleaning up preinstalled cruft"
-apt -qy purge gcc-9-base git gnustep-common install-info installation-report javascript-common modemmanager netpbm ppp nftables ntfs-3g os-prober packagekit packagekit-tools pinentry-qt plymouth plymouth-label reportbug rsyslog scrot smartmontools sweeper tasksel telnet termit upower usbutils >/dev/null
+apt -qy purge gcc-9-base git gnustep-common install-info installation-report javascript-common modemmanager netpbm ppp nftables ntfs-3g os-prober packagekit packagekit-tools pinentry-qt reportbug rsyslog scrot smartmontools sweeper tasksel telnet termit upower usbutils >/dev/null
 
 # "fasttrack" is required for installing virtualbox-guest-x11
 echo "Adding virtualbox-guest repository"
@@ -80,7 +80,7 @@ AUTOLOGIN
 
 # Post-install cleanup
 echo "Cleaning up"
-apt -qy purge doc-debian debian-faq genisoimage man-db manpages qemu-utils xorg-docs-core >/dev/null
+apt -qy purge doc-debian debian-faq genisoimage man-db manpages plymouth plymouth-label qemu-utils xorg-docs-core >/dev/null
 apt -qy --purge autoremove >/dev/null
 dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt -qy purge
 apt -qy clean >/dev/null
