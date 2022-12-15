@@ -17,7 +17,7 @@ systemctl daemon-reload
 # Clean out some preinstalled cruft before upgrading.
 # These need to all be in one command, otherwise initramfs gets rebuilt repeatedly.
 echo "Cleaning up preinstalled cruft"
-apt -qy purge gcc-9-base git gnustep-common install-info installation-report javascript-common modemmanager netpbm ppp nftables ntfs-3g os-prober packagekit packagekit-tools pinentry-qt reportbug rsyslog scrot smartmontools sweeper tasksel telnet termit upower usbutils >/dev/null
+apt -qy purge gcc-9-base install-info ppp nftables os-prober reportbug rsyslog tasksel telnet >/dev/null
 
 # "fasttrack" is required for installing virtualbox-guest-x11
 echo "Adding virtualbox-guest repository"
