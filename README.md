@@ -6,6 +6,7 @@ The Vagrantfiles are structured in hierarchical directories: `[OS]/[Release]/[En
 
 My goal is to eventually run *all* of my desktop applications in individual VMs.
 
+
 ## But why?
 
 I want to decouple my applications from my operating system. I want to be able to reliably "black start" my entire development environment -- to go from an empty hard drive to a fully functional desktop environment, with all my data restored, with only a little effort. I want to wrest control back from applications with ravenous appetites for resources -- I want to be able to choose exactly how much CPU, RAM, and disk each one gets. I want better security from suspect applications that are a regrettable professional necessity (like Zoom). I want to run the best applications each operating system has to offer all on one platform. I like the idea of Qubes but I want the convenience and hardware support of a mainstream Linux distribution on my laptop.
@@ -17,3 +18,8 @@ So far the experiment is going well! These VMs are being hosted on an early 2019
 I'm making these freely available (MIT-licensed) in part because this will force me to have a hard separation between my personal data and the applications that manage it.
 
 Feel free to open an Issue with a suggestion or a bug report or even make a pull request with some environments and applications of your own.
+
+
+## TODO
+
+* Detect vagrant versions > 2.2.10 with VirtualBox and automatically use VDI instead of VMDK to get trim support (see also https://github.com/hashicorp/vagrant/issues/10677 and https://developer.hashicorp.com/vagrant/docs/v2.2.10/disks/usage). There is kind of a hacky way to do this before 2.2.10 (https://crysol.org/recipe/2015-11-17/vagrant-vdi-virtual-disk-for-virtualbox.html), but it requires hardcoding the disk image path and I've decided I don't want to do that.
