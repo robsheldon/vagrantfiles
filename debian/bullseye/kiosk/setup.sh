@@ -37,6 +37,9 @@ apt -qy upgrade >/dev/null
 echo "Installing utilities"
 apt -qy install aptitude swapspace >/dev/null
 
+echo "Installing xorg"
+apt -qy --no-install-recommends install xorg >/dev/null
+
 # lightdm is required for basic desktop application support, and requires additional
 # recommended packages to work properly.
 echo "Installing desktop environment"
