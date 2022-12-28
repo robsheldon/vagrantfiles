@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 # A unique label for this VM.
-$vm_id = 'debian-bullseye-kiosk-firefox'
+$vm_id = 'debian-bullseye-openbox-firefox'
 
 # Load user's defaults and vm-specific options.
 if File.directory?(my_config_dir = File.join(Dir.home, '.config', 'vagrant'))

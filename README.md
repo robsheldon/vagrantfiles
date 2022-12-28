@@ -12,7 +12,7 @@ Each Vagrantfile gets a unique `$vm_id`, and then the Vagrantfile looks for a fi
 You can use the defaults file along with `$vm_id` to load VM-specific defaults and behavior without modifying their Vagrantfiles. An example `~/config/vagrant/defaults.rb`:
 
 ```ruby
-if $vm_id == 'debian-bullseye-kiosk-firefox'
+if $vm_id == 'debian-bullseye-openbox-firefox'
     Vagrant.configure("2") do |config|
         config.vm.provider "virtualbox" do |vb|
             vb.customize ['sharedfolder', 'add', :id, '--name', 'Downloads', '--hostpath', File.join(Dir.home, 'Downloads'), '--automount', '--auto-mount-point', '/home/vagrant/Downloads']
