@@ -27,6 +27,14 @@ Vagrant.configure("2") do |config|
         vb.customize                  ['modifyvm', :id, '--draganddrop', 'bidirectional']
         vb.customize                  ['modifyvm', :id, '--audio', 'pulse']
         vb.customize                  ['setextradata', :id, 'GUI/DefaultCloseAction', 'Shutdown']
+        if File.directory?(downloads_dir = File.join(Dir.home, 'Downloads'))
+            # config.vm.synced_folder is *supposed* to handle this, but I
+            # had trouble getting it to do all the things I wanted
+            # (mount in home directory, mount with custom uid/gid,
+            # automount). Instead, the `VboxManage sharedfolder` feature
+            # is used, and then setup.sh takes care of the rest.
+            vb.customize              ['sharedfolder', 'add', :id, '--name', 'downloads', '--hostpath', downloads_dir]
+        end
     end
 
     # Collect a list of parent directories that contain Vagrantfiles and "setup.sh" scripts.
