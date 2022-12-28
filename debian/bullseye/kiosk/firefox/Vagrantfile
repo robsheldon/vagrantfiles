@@ -1,12 +1,18 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# A unique label for this VM.
+$vm_id = 'debian-bullseye-kiosk-firefox'
+
+# Load user's defaults and vm-specific options.
+if File.directory?(my_config_dir = File.join(Dir.home, '.config', 'vagrant'))
+    if File.file?(my_defaults = File.join(my_config_dir, 'defaults.rb'))
+        load my_defaults
+    end
+end
+
 # Set up a minimal openbox environment with VirtualBox Guest Additions.
-
 Vagrant.configure("2") do |config|
-
-    # Force the use of VirtualBox.
-    ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
 
     config.vm.box                   = "debian/bullseye64"
     config.vm.box_check_update      = false

@@ -4,10 +4,31 @@ This is a collection of Vagrantfiles and shell scripts I'm using to experiment w
 
 The Vagrantfiles are structured in hierarchical directories: `[OS]/[Release]/[Environment]/[Application]`. The Vagrantfiles include some provisioning logic that makes it easy to manage this setup for multiple applications.
 
+
+## Support for defaults in your home directory
+
+Each Vagrantfile gets a unique `$vm_id`, and then the Vagrantfile looks for a file at `~/.config/vagrant/defaults.rb`. If one is found there, it is loaded.
+
+You can use the defaults file along with `$vm_id` to load VM-specific defaults and behavior without modifying their Vagrantfiles. An example `~/config/vagrant/defaults.rb`:
+
+```ruby
+if $vm_id == 'debian-bullseye-kiosk-firefox'
+    Vagrant.configure("2") do |config|
+        config.vm.provider "virtualbox" do |vb|
+            vb.customize ['sharedfolder', 'add', :id, '--name', 'Downloads', '--hostpath', File.join(Dir.home, 'Downloads'), '--automount', '--auto-mount-point', '/home/vagrant/Downloads']
+        end
+    end
+end
+```
+
+This would add your local Downloads folder to the Firefox VM at `~/Downloads` and automatically mount it. (The above is for example purposes, a future version of my Firefox Vagrantfile will have this built-in.)
+
+
+## Personal Notes
+
 My goal is to eventually run *all* of my desktop applications in individual VMs.
 
-
-## But why?
+### But why?
 
 I want to decouple my applications from my operating system. I want to be able to reliably "black start" my entire development environment -- to go from an empty hard drive to a fully functional desktop environment, with all my data restored, with only a little effort. I want to wrest control back from applications with ravenous appetites for resources -- I want to be able to choose exactly how much CPU, RAM, and disk each one gets. I want better security from suspect applications that are a regrettable professional necessity (like Zoom). I want to run the best applications each operating system has to offer all on one platform. I like the idea of Qubes but I want the convenience and hardware support of a mainstream Linux distribution on my laptop.
 
