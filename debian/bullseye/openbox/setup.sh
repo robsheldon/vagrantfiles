@@ -61,7 +61,7 @@ cat <<'RCXML' | tee /home/vagrant/.config/openbox/rc.xml >/dev/null
 <openbox_config xmlns="http://openbox.org/3.4/rc" xmlns:xi="http://www.w3.org/2001/XInclude">
 
   <desktops>
-    <number>4</number>
+    <number>1</number>
   </desktops>
 
   <applications>
