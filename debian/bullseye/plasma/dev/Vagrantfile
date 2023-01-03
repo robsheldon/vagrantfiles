@@ -1,0 +1,64 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# A unique label for this VM.
+$vm_id = 'debian-bullseye-plasma-dev'
+
+# Load user's defaults and vm-specific options.
+if File.directory?(my_config_dir = File.join(Dir.home, '.config', 'vagrant'))
+    if File.file?(my_defaults = File.join(my_config_dir, 'defaults.rb'))
+        load my_defaults
+    end
+end
+
+# Set up a minimal openbox environment with VirtualBox Guest Additions.
+Vagrant.configure("2") do |config|
+
+    config.vm.box                   = "debian/bullseye64"
+    config.vm.box_check_update      = false
+  
+    # Configure VirtualBox for desktop application use.
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui                      = true
+        vb.memory                   = 6144
+        vb.cpus                     = 4
+        vb.check_guest_additions    = false
+        vb.customize                  ['modifyvm', :id, '--vram', '18']
+        vb.customize                  ['modifyvm', :id, '--accelerate3d', 'on']
+        vb.customize                  ['modifyvm', :id, '--clipboard-mode', 'bidirectional']
+        vb.customize                  ['modifyvm', :id, '--draganddrop', 'bidirectional']
+        vb.customize                  ['modifyvm', :id, '--audio', 'pulse']
+        vb.customize                  ['setextradata', :id, 'GUI/DefaultCloseAction', 'Shutdown']
+        if File.directory?(downloads_dir = File.join(Dir.home, 'Downloads'))
+            # config.vm.synced_folder is *supposed* to handle this, but I
+            # had trouble getting it to do all the things I wanted
+            # (mount in home directory, mount with custom uid/gid,
+            # automount). Instead, the `VboxManage sharedfolder` feature
+            # is used, and then setup.sh takes care of the rest.
+            vb.customize              ['sharedfolder', 'add', :id, '--name', 'downloads', '--hostpath', downloads_dir]
+        end
+    end
+
+    # Collect a list of parent directories that contain Vagrantfiles and "setup.sh" scripts.
+    # Stop when a parent directory doesn't contain a Vagrantfile.
+    setupfiles = []
+    path = __dir__
+    while File.dirname(path) != path && path != "/"
+        if ! File.file?(File.join(path, 'Vagrantfile'))
+            break
+        elsif File.file?(setupfile = File.join(path, 'setup.sh'))
+            setupfiles.unshift(setupfile)
+        end
+        path = File.dirname(path)
+    end
+
+    # Run the setup.sh file in each of the parent directories,
+    # starting from the top.
+    for setupfile in setupfiles do
+        config.vm.provision "shell", path: setupfile
+    end
+
+    # Restart the VM to properly load the desktop environment.
+    config.vm.provision "shell", inline: "reboot"
+
+end
