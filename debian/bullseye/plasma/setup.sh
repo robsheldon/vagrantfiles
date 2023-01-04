@@ -9,7 +9,8 @@ echo "Installing desktop environment"
 apt-get -qy install lightdm plasma-desktop virtualbox-guest-x11 >/dev/null
 
 echo "Configuring desktop environment"
-mkdir -p /home/vagrant/.config/openbox
+kwriteconfig5 --file kscreensaverrc --group Daemon --key Autolock false
+kwriteconfig5 --file kscreenlockerrc --group Daemon --key Autolock false
 
 # Configure LightDM to automatically login (start the desktop)
 mkdir -p /etc/lightdm/lightdm.conf.d
