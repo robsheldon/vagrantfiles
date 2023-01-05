@@ -33,6 +33,8 @@ Vagrant.configure("2") do |config|
         vb.memory                   = 1024
         vb.cpus                     = 1
         vb.check_guest_additions    = false
+        vb.customize                  ['modifyvm', :id, '--guestmemoryballoon', 512]
+        vb.customize                  ['modifyvm', :id, '--pagefusion', 'on']
         vb.customize                  ['setextradata', :id, 'GUI/DefaultCloseAction', 'Shutdown']
     end
 
