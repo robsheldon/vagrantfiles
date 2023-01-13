@@ -55,7 +55,8 @@ echo "Configuring autostart"
 sed -i -e 's/^autologin-user=.*$/autologin-user=developer/g' /etc/lightdm/lightdm.conf.d/01_autologin.conf
 
 echo "Cleaning up"
-apt-get -qy purge doc-debian debian-faq genisoimage plasma-discover plymouth plymouth-label qemu-utils xorg-docs-core >/dev/null
+balooctl disable
+apt-get -qy purge apache2 apache2-bin avahi-daemon avahi-autoipd bluedevil bluetooth bluez doc-debian debian-faq genisoimage iw kde-config-screenlocker kdeconnect keditbookmarks khelpcenter kinfocenter kscreen kup-backup kuserfeedback-doc modemmanager plasma-discover plymouth plymouth-label powerdevil qemu-utils upower wpasupplicant wireless-tools wireless-regdb xorg-docs-core >/dev/null
 apt-get -qy --purge autoremove >/dev/null
 dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt-get -qy purge >/dev/null
 apt-get -qy clean >/dev/null
