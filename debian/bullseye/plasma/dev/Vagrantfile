@@ -23,14 +23,32 @@ Vagrant.configure("2") do |config|
         vb.memory                   = 6144
         vb.cpus                     = 4
         vb.check_guest_additions    = false
+        # Minimum required vram setting for large windows on 1080p.
         vb.customize                  ['modifyvm', :id, '--vram', '18']
+        # Provide host hardware gpu acceleration to the VM.
         vb.customize                  ['modifyvm', :id, '--accelerate3d', 'on']
+        # Easy clipboard and drag/drop support between host and VM.
         vb.customize                  ['modifyvm', :id, '--clipboard-mode', 'bidirectional']
         vb.customize                  ['modifyvm', :id, '--draganddrop', 'bidirectional']
+        # Connect to PulseAudio on the host by default. This works best for current
+        # Debian desktop environments.
         vb.customize                  ['modifyvm', :id, '--audio', 'pulse']
+        # Allow other VMs to borrow memory from this one.
         vb.customize                  ['modifyvm', :id, '--guestmemoryballoon', 2048]
+        # Allow VMs to share memory pages when those pages are identical.
+        # This works best when there are multiple instances of the same OS
+        # running simultaneously. It weakens "security" slightly, but perfect
+        # security is not a goal for this project.
         vb.customize                  ['modifyvm', :id, '--pagefusion', 'on']
+        # Automatically send a "shutdown" event if the window's close box is clicked.
         vb.customize                  ['setextradata', :id, 'GUI/DefaultCloseAction', 'Shutdown']
+        # The "virtio" interface gets slightly better performance and less CPU load,
+        # and is well-supported in current Linux. https://www.virtualbox.org/manual/ch06.html
+        vb.customize                  ['modifyvm', :id, '--nictype1', 'virtio']
+        # The next two lines proxy dns through the host, which helps the VM do
+        # a better job of coping with network changes on the host.
+        vb.customize                  ['modifyvm', :id, '--natdnshostresolver1', 'on']
+        vb.customize                  ['modifyvm', :id, '--natdnsproxy1', 'on']
         if File.directory?(downloads_dir = File.join(Dir.home, 'Downloads'))
             # config.vm.synced_folder is *supposed* to handle this, but I
             # had trouble getting it to do all the things I wanted
