@@ -1,3 +1,5 @@
+export DEBIAN_FRONTEND=noninteractive
+
 # Turn off syslog; for this use, it isn't needed, and just adds unnecessary disk i/o.
 systemctl disable rsyslog
 
@@ -8,7 +10,7 @@ Storage=none
 ForwardToSyslog=yes
 JOURNALD
 systemctl daemon-reload
-apt-get -qy purge rsyslog
+apt-get -qy purge rsyslog >/dev/null
 
 echo "Installing xorg"
 apt-get -qy --no-install-recommends install xorg >/dev/null
@@ -58,5 +60,5 @@ AUTOLOGIN
 echo "Cleaning up"
 apt-get -qy purge doc-debian debian-faq genisoimage man-db manpages plymouth plymouth-label qemu-utils xorg-docs-core >/dev/null
 apt-get -qy --purge autoremove >/dev/null
-dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt -qy purge
+dpkg -l | grep '^rc' | awk '{print $2}' | xargs apt-get -qy purge >/dev/null
 apt-get -qy clean >/dev/null

@@ -1,3 +1,5 @@
+export DEBIAN_FRONTEND=noninteractive
+
 echo "Creating firefox user"
 useradd -g vboxsf -m -s /bin/bash firefox
 cp -r /home/vagrant/.config /home/firefox/
@@ -13,8 +15,8 @@ if mount -t vboxsf downloads /home/firefox/Downloads 2>/dev/null; then
 fi
 
 echo "Installing firefox-esr"
-apt -qy install firefox-esr >/dev/null
+apt-get -qy install firefox-esr >/dev/null
 
 echo "Configuring autostart"
 sed -i -e 's/^autologin-user=.*$/autologin-user=firefox/g' /etc/lightdm/lightdm.conf.d/01_autologin.conf
-echo '/usr/bin/firefox &' | tee -a /home/firefox/.config/openbox/autostart
+echo '/usr/bin/firefox &' | tee -a /home/firefox/.config/openbox/autostart >/dev/null
