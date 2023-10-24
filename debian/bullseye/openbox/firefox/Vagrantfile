@@ -130,4 +130,8 @@ Vagrant.configure("2") do |config|
         config.vm.provision "shell", path: setupfile
     end
 
+    # Set the timezone.
+    localtz = `timedatectl | grep -oP 'Time zone: \\K[^\s]+'`
+    config.vm.provision "shell", inline: "timedatectl set-timezone #{localtz}"
+
 end

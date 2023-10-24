@@ -3,6 +3,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "Creating firefox user"
 useradd -g vboxsf -m -s /bin/bash firefox
 cp -r /home/vagrant/.config /home/firefox/
+chown -R firefox:vboxsf /home/firefox/.config
 # Automount the downloads shared folder, if available.
 # I wish there were a better way to do this, but I can't find any way
 # to poll the guest environment for available shared folders. Instead,
