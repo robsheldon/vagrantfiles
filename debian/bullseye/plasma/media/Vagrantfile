@@ -144,6 +144,22 @@ Vagrant.configure("2") do |config|
         end
     end
 
+    # Create the machine's user account now. Setup scripts may need to configure
+    # something for the user account, so this needs to be done before they run,
+    # but some user account features will need to be set up after the scripts run.
+    # Unfortunately, there doesn't seem to be a good way to change the default
+    # "vagrant" user account during provisioning.
+    if $vm_user != 'vagrant'
+        config.vm.provision "shell", inline: <<-SHELL
+        echo "Creating user account"
+        useradd -U -G sudo -m -s /bin/bash #{$vm_user}
+        cp -r /home/vagrant/.config /home/#{$vm_user}/
+        cp -r /home/vagrant/.ssh /home/#{$vm_user}/
+        echo "%sudo ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/sudo >/dev/null
+        chown -R #{$vm_user}:#{$vm_user} /home/#{$vm_user}
+        SHELL
+    end
+
     # Collect a list of parent directories that contain Vagrantfiles and "setup.sh" scripts.
     # Stop when a parent directory doesn't contain a Vagrantfile.
     setupfiles = []
@@ -163,22 +179,15 @@ Vagrant.configure("2") do |config|
         config.vm.provision "shell", path: setupfile
     end
 
-    # Create the user account and automatically attach the Downloads folder.
-    # Unfortunately, there doesn't seem to be a good way to change the default
-    # "vagrant" user account during provisioning.
+    # Automatically attach the Downloads folder.
     # Can't run this until after the system installs virtualbox guest utils,
     # or the 'vboxsf' group won't exist and this will break. Can't install
     # virtualbox guest utils from here because that requires knowing which
     # desktop environment is being installed. :-(
     if $vm_user != 'vagrant'
         config.vm.provision "shell", inline: <<-SHELL
-        echo "Creating user account"
-        useradd -U -G vboxsf,sudo -m -s /bin/bash #{$vm_user}
-        cp -r /home/vagrant/.config /home/#{$vm_user}/
-        cp -r /home/vagrant/.ssh /home/#{$vm_user}/
-        echo "%sudo ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/sudo >/dev/null
-        chown -R #{$vm_user}:#{$vm_user} /home/#{$vm_user}
         echo "Attaching Downloads folder"
+        usermod -a -G vboxsf #{$vm_user}
         mkdir -p /home/#{$vm_user}/Downloads
         mount -t vboxsf downloads /home/#{$vm_user}/Downloads 2>/dev/null && echo "downloads              /home/#{$vm_user}/Downloads         vboxsf  defaults,uid=#{$vm_user},gid=vboxsf         0       0" | tee -a /etc/fstab >/dev/null
         SHELL

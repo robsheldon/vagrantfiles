@@ -1,5 +1,7 @@
 export DEBIAN_FRONTEND=noninteractive
 
+user="$(ls -1 /home | grep -v vagrant)"
+
 echo "Installing curl, git, gzip, rsync, wget"
 apt-get -qy install curl git gzip rsync wget >/dev/null
 
@@ -15,8 +17,15 @@ apt-get -qy install yakuake >/dev/null
 echo "Installing VLC"
 apt-get -qy install vlc >/dev/null
 
+echo "Installing dependencies for freetube"
+apt-get -qy install libasound2
+echo "Downloading freetube"
+wget -O /home/"$user"/freetube.deb https://github.com/FreeTubeApp/FreeTube/releases/download/v0.19.1-beta/freetube_0.19.1_amd64.deb
+echo "Installing freetube"
+apt-get -qy install /home/"$user"/freetube.deb && rm /home/"$user"/freetube.deb 
+
 echo "Configuring autostart"
-sed -i -e 's/^autologin-user=.*$/autologin-user=rob/g' /etc/lightdm/lightdm.conf.d/01_autologin.conf
+sed -i -e "s/^autologin-user=.*\$/autologin-user=$user/g" /etc/lightdm/lightdm.conf.d/01_autologin.conf
 
 echo "Cleaning up"
 balooctl disable
