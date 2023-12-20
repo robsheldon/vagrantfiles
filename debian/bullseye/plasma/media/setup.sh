@@ -28,6 +28,7 @@ echo "Configuring autostart"
 sed -i -e "s/^autologin-user=.*\$/autologin-user=$user/g" /etc/lightdm/lightdm.conf.d/01_autologin.conf
 
 echo "Cleaning up"
+kwriteconfig5 --file /home/"$user"/.config/kscreenlockerrc --group Daemon --key Autolock false
 balooctl disable
 apt-get -qy purge apache2 apache2-bin avahi-daemon avahi-autoipd bluedevil bluetooth bluez doc-debian debian-faq genisoimage iw kde-config-screenlocker kdeconnect keditbookmarks khelpcenter kinfocenter kscreen kup-backup kuserfeedback-doc modemmanager plasma-discover plymouth plymouth-label powerdevil qemu-utils upower wpasupplicant wireless-tools wireless-regdb xorg-docs-core >/dev/null
 apt-get -qy --purge autoremove >/dev/null
