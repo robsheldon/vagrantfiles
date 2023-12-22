@@ -1,9 +1,26 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# A unique label for this VM.
+# A unique label for this VM configuration.
+# Multiple VMs may share the same configuration.
 $vm_id = 'debian-bullseye-plasma-dev'
+
+# A unique label for this specific VM, if provided by the user.
+# May be set by VMNAME=... in the user's environment.
+if defined?(ENV['VMNAME'])
+    $vm_name = ENV['VMNAME']
+else
+    $vm_name = nil
+end
+
+# Will be set if 'ENCRYPTION=on' in the user's environment.
 $vm_password = nil
+
+# VM's user account will be configured to match the host machine's user account.
+# This makes it easier for dotfiles to be used across VMs.
+$vm_user = ENV['USER']
+
+$vagrant_cmd = ARGV[0]
 
 # Load user's defaults and vm-specific options.
 if File.directory?(my_config_dir = File.join(Dir.home, '.config', 'vagrant'))
@@ -15,60 +32,71 @@ end
 # Set up a minimal openbox environment with VirtualBox Guest Additions.
 Vagrant.configure("2") do |config|
 
-    config.vm.define "bullseye" do |debian|
-        debian.vm.box                   = "debian/bullseye64"
-        debian.vm.box_check_update      = false
-
-        debian.trigger.before :up do
-            if defined?(ENV['ENCRYPTION']) && ENV['ENCRYPTION'] == 'on'
-                print "This VM is preconfigured to be encrypted.\nEnter the password to be used to encrypt this VM, or \"n\" to cancel: "
-                password = STDIN.noecho(&:gets).strip
-                if password != "n"
-                    $vm_password = Tempfile.new
-                    $vm_password.write(password)
-                    $vm_password.rewind
-                end
-                puts ""
+    if $vm_name
+        config.vm.define $vm_name do |instance|
+            instance.vm.provider "virtualbox" do |vb|
+                vb.name = $vm_name
+                config.vm.hostname = $vm_name.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-+|-+$/, '')
             end
         end
+    end
 
-        # Restart the VM to properly load the desktop environment.
-        # If encryption was enabled for this VM and the user supplied a password,
-        # then the drive image gets encrypted here.
-        # debian.trigger.after :"Vagrant::Action::Builtin::Provision", type: :action do |trigger|
-        debian.trigger.after :up do |trigger|
-            trigger.ruby do |env,machine|
-                # For future reference, this can also be retrieved by:
-                # machine_uuid = File.read(".vagrant/machines/default/virtualbox/index_uuid")
-                # VBoxManage needs the disk image UUID for the encryptmedium
-                # command, and we need the machine UUID to get the disk image UUID.
-                hduuid = `VBoxManage showvminfo #{machine.id} --machinereadable | grep -oP '"?SATA(\s*Controller)?-ImageUUID-0-0"?\s*=\s*"?\\K[a-z0-9-]+'`.strip
-                $stdout.sync = true
-                state = ''
-                seconds = 0
-                while state != 'poweroff'
-                    sleep(1)
-                    seconds += 1
-                    if state == ''
-                        print "Shutting down VM #{machine.id}"
-                    end
-                    state = `VBoxManage showvminfo #{machine.id} --machinereadable | grep -oP '"?VMState"?\s*=\s*"?\\K[a-z0-9-]+'`.strip
-                    if state == 'running'
-                        if seconds == 1
-                            # Attempt shutdown with acpipowerbutton.
-                            puts `VBoxManage controlvm #{machine.id} acpipowerbutton`
-                        end
-                        print "."
-                    end
-                end
-                print "\n"
-                unless $vm_password.nil?
-                    puts "Encrypting drive image"
-                    puts `VBoxManage encryptmedium #{hduuid} --newpassword #{$vm_password.path} --cipher AES-XTS256-PLAIN64 --newpasswordid #{machine.id}`
-                end
-                puts "Rebooting"
-                puts `VBoxManage startvm #{machine.id}`
+    if $vagrant_cmd == "ssh"
+        config.ssh.username = $vm_user
+    end
+
+    config.vm.box                   = "debian/bullseye64"
+    config.vm.box_check_update      = false
+
+    config.trigger.before :up do
+        if defined?(ENV['ENCRYPTION']) && ENV['ENCRYPTION'] == 'on'
+            print "This VM is preconfigured to be encrypted.\nEnter the password to be used to encrypt this VM, or \"n\" to cancel: "
+            password = STDIN.noecho(&:gets).strip
+            if password != "n"
+                $vm_password = Tempfile.new
+                $vm_password.write(password)
+                $vm_password.rewind
             end
+            puts ""
+        end
+    end
+
+    # Restart the VM to properly load the desktop environment.
+    # If encryption was enabled for this VM and the user supplied a password,
+    # then the drive image gets encrypted here.
+    # config.trigger.after :"Vagrant::Action::Builtin::Provision", type: :action do |trigger|
+    config.trigger.after :up do |trigger|
+        trigger.ruby do |env,machine|
+            # For future reference, this can also be retrieved by:
+            # machine_uuid = File.read(".vagrant/machines/default/virtualbox/index_uuid")
+            # VBoxManage needs the disk image UUID for the encryptmedium
+            # command, and we need the machine UUID to get the disk image UUID.
+            hduuid = `VBoxManage showvminfo #{machine.id} --machinereadable | grep -oP '"?SATA(\s*Controller)?-ImageUUID-0-0"?\s*=\s*"?\\K[a-z0-9-]+'`.strip
+            $stdout.sync = true
+            state = ''
+            seconds = 0
+            while state != 'poweroff'
+                sleep(1)
+                seconds += 1
+                if state == ''
+                    print "Shutting down VM #{machine.id}"
+                end
+                state = `VBoxManage showvminfo #{machine.id} --machinereadable | grep -oP '"?VMState"?\s*=\s*"?\\K[a-z0-9-]+'`.strip
+                if state == 'running'
+                    if seconds == 1
+                        # Attempt shutdown with acpipowerbutton.
+                        puts `VBoxManage controlvm #{machine.id} acpipowerbutton`
+                    end
+                    print "."
+                end
+            end
+            print "\n"
+            unless $vm_password.nil?
+                puts "Encrypting drive image"
+                puts `VBoxManage encryptmedium #{hduuid} --newpassword #{$vm_password.path} --cipher AES-XTS256-PLAIN64 --newpasswordid #{machine.id}`
+            end
+            puts "Rebooting"
+            puts `VBoxManage startvm #{machine.id}`
         end
     end
 
@@ -100,7 +128,7 @@ Vagrant.configure("2") do |config|
         vb.customize                  ['modifyvm', :id, '--natdnsproxy1', 'on']
         # Some additional configuration options for multimedia VMs.
         # 18MB Minimum required vram for large windows on 1080p.
-        vb.customize                  ['modifyvm', :id, '--vram', '18']
+        vb.customize                  ['modifyvm', :id, '--vram', '32']
         # Provide host hardware gpu acceleration to the VM.
         vb.customize                  ['modifyvm', :id, '--accelerate3d', 'on']
         # Connect to PulseAudio on the host by default. This works best for current
@@ -114,6 +142,22 @@ Vagrant.configure("2") do |config|
             # is used, and then setup.sh takes care of the rest.
             vb.customize              ['sharedfolder', 'add', :id, '--name', 'downloads', '--hostpath', downloads_dir]
         end
+    end
+
+    # Create the machine's user account now. Setup scripts may need to configure
+    # something for the user account, so this needs to be done before they run,
+    # but some user account features will need to be set up after the scripts run.
+    # Unfortunately, there doesn't seem to be a good way to change the default
+    # "vagrant" user account during provisioning.
+    if $vm_user != 'vagrant'
+        config.vm.provision "shell", inline: <<-SHELL
+        echo "Creating user account"
+        useradd -U -G sudo -m -s /bin/bash #{$vm_user}
+        cp -r /home/vagrant/.config /home/#{$vm_user}/
+        cp -r /home/vagrant/.ssh /home/#{$vm_user}/
+        echo "%sudo ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/sudo >/dev/null
+        chown -R #{$vm_user}:#{$vm_user} /home/#{$vm_user}
+        SHELL
     end
 
     # Collect a list of parent directories that contain Vagrantfiles and "setup.sh" scripts.
@@ -133,6 +177,20 @@ Vagrant.configure("2") do |config|
     # starting from the top.
     for setupfile in setupfiles do
         config.vm.provision "shell", path: setupfile
+    end
+
+    # Automatically attach the Downloads folder.
+    # Can't run this until after the system installs virtualbox guest utils,
+    # or the 'vboxsf' group won't exist and this will break. Can't install
+    # virtualbox guest utils from here because that requires knowing which
+    # desktop environment is being installed. :-(
+    if $vm_user != 'vagrant'
+        config.vm.provision "shell", inline: <<-SHELL
+        echo "Attaching Downloads folder"
+        usermod -a -G vboxsf #{$vm_user}
+        mkdir -p /home/#{$vm_user}/Downloads
+        mount -t vboxsf downloads /home/#{$vm_user}/Downloads 2>/dev/null && echo "downloads              /home/#{$vm_user}/Downloads         vboxsf  defaults,uid=#{$vm_user},gid=vboxsf         0       0" | tee -a /etc/fstab >/dev/null
+        SHELL
     end
 
     # Set the timezone.
