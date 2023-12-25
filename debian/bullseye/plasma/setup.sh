@@ -21,6 +21,12 @@ autologin-user-timeout=0
 autologin-session=plasma
 AUTOLOGIN
 
+# Plasma environments are likely to be more RAM hungry. zram as a swap utility
+# can help take a little pressure off when things get tight.
+# https://wiki.debian.org/ZRam
+apt-get -qy install zram-tools
+sed -i -e 's/^\s*\(#\?\s*\)PERCENT=.*$/PERCENT=25/g' /etc/default/zramswap
+
 # Post-install cleanup
 echo "Cleaning up"
 apt-get -qy purge doc-debian debian-faq genisoimage plymouth plymouth-label qemu-utils xorg-docs-core >/dev/null
