@@ -21,3 +21,25 @@ apt-get -qy install firefox-esr >/dev/null
 echo "Configuring autostart"
 sed -i -e 's/^autologin-user=.*$/autologin-user=firefox/g' /etc/lightdm/lightdm.conf.d/01_autologin.conf
 echo '/usr/bin/firefox &' | tee -a /home/firefox/.config/openbox/autostart >/dev/null
+
+echo "Configuring window manager settings"
+cat <<'RCXML' | tee /home/firefox/.config/openbox/rc.xml >/dev/null
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <desktops>
+    <number>1</number>
+  </desktops>
+
+  <applications>
+    <application class="*">
+      <decor>no</decor>
+    </application>
+    <application class="Firefox*">
+      <maximized>yes</maximized>
+    </application>
+  </applications>
+
+</openbox_config>
+RCXML
+
