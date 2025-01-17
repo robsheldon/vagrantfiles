@@ -29,7 +29,7 @@ if File.directory?(my_config_dir = File.join(Dir.home, '.config', 'vagrant'))
     end
 end
 
-# Set up a minimal openbox environment with VirtualBox Guest Additions.
+# Set up a minimal Plasma environment with VirtualBox Guest Additions.
 Vagrant.configure("2") do |config|
 
     if $vm_name
